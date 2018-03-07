@@ -1,9 +1,16 @@
 #!/bin/bash
-ssh c.jfritz@test-handler-05.ucs.baengr.gogoair.com "cd /home/c.jfritz/scs-workspace/gate-src/docker-images && git fetch upstream && git checkout upstream/WebdriverFullpageScreenshot_testing && make setup-gate-test"
-ssh c.jfritz@test-handler-05.ucs.baengr.gogoair.com "docker exec -t gate-test-c.jfritz py.test -vs ../src/tests/unit/TestWebdriverLocalJfritz.py"
-cd ~/tmp
+TEMPDIR=~/tmp
+REMOTE=c.jfritz@test-handler-01.ucs.baengr.gogoair.com
+ssh $REMOTE "rm -f /home/c.jfritz/scs-workspace/gate-src/docker-images/logs/*.png"
+ssh $REMOTE "cd /home/c.jfritz/scs-workspace/gate-src/docker-images && git fetch upstream && git checkout upstream/WebdriverFullpageScreenshot_testing && make setup-gate-test"
+ssh $REMOTE "docker exec -t gate-test-c.jfritz py.test -vs ../src/tests/unit/TestWebdriverLocalJfritz.py"
+ssh $REMOTE "docker exec -t gate-test-c.jfritz py.test -vs ../src/tests/unit/TestVerifyScreenshots.py"
+cd $TEMPDIR
 rm -f *.png 
-scp c.jfritz@test-handler-05.ucs.baengr.gogoair.com:scs-workspace/gate-src/docker-images/logs/*webdriver_testing.png ./ 
-# view the latest png file
-gpicview $(ls -t *webdriver_testing.png | head -1)
+scp $REMOTE:scs-workspace/gate-src/docker-images/logs/*webdriver_testing*.png ./ 
+scp $REMOTE:scs-workspace/gate-src/docker-images/logs/*browser*.png ./ 
+ssh $REMOTE "cd /home/c.jfritz/scs-workspace/gate-src/docker-images && make clean-gate-test"
+# This views the latest png file
+# $(ls -t *.png | head -1)
 cd -
+gpicview $TEMPDIR/*webdriver_testing*.png $TEMPDIR/*browser*.png
